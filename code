@@ -1,0 +1,46 @@
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from base64 import b64encode, b64decode
+
+def encrypt_text(key, plaintext):
+    # Generate a random IV (Initialization Vector)
+    iv = b'\x00' * 16  # You should use a random IV in a real-world scenario
+
+    # Create an AES cipher object with CBC mode
+    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+
+    # Encrypt the plaintext
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(plaintext.encode('utf-8')) + encryptor.finalize()
+
+    # Combine the IV and ciphertext and encode in base64
+    encrypted_text = b64encode(iv + ciphertext).decode('utf-8')
+
+    return encrypted_text
+
+def decrypt_text(key, encrypted_text):
+    # Decode base64 and separate IV and ciphertext
+    encrypted_data = b64decode(encrypted_text.encode('utf-8'))
+    iv = encrypted_data[:16]
+    ciphertext = encrypted_data[16:]
+
+    # Create an AES cipher object with CBC mode
+    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+
+    # Decrypt the ciphertext
+    decryptor = cipher.decryptor()
+    decrypted_text = decryptor.update(ciphertext) + decryptor.finalize()
+
+    return decrypted_text.decode('utf-8')
+
+# Example usage
+key = b'Sixteen byte key'  # AES-128 requires a 16-byte key
+plaintext = 'Hello, World!'
+
+# Encrypt the text
+encrypted_text = encrypt_text(key, plaintext)
+print(f'Encrypted Text: {encrypted_text}')
+
+# Decrypt the text
+decrypted_text = decrypt_text(key, encrypted_text)
+print(f'Decrypted Text: {decrypted_text}')
